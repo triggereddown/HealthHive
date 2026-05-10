@@ -1,56 +1,65 @@
 import { Link } from 'react-router-dom';
-import { FaHeartbeat, FaGithub, FaTwitter, FaLinkedin } from 'react-icons/fa';
 
 function Footer() {
   const currentYear = new Date().getFullYear();
   return (
-    <footer className="bg-gray-900 text-gray-400">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div className="md:col-span-2">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <FaHeartbeat className="text-white text-sm" />
-              </div>
-              <span className="font-playfair text-xl font-bold text-white">ComCare</span>
-            </div>
-            <p className="text-sm leading-relaxed max-w-xs">
+    <footer className="bg-void relative z-50">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-16 xl:px-24 pt-24 pb-12">
+        
+        {/* Top Section */}
+        <div className="mb-16">
+          <h2 className="font-display text-[clamp(4rem,12vw,10rem)] text-[#1A1A1A] leading-none select-none tracking-tightest">
+            COMCARE
+          </h2>
+          <div className="h-px w-full bg-[#222222] mt-4" />
+        </div>
+
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-16 mb-24">
+          {/* Brand Statement */}
+          <div>
+            <span className="font-body font-medium tracking-ultra uppercase text-2xs text-accent mb-4 block">
+              / HEALTH INTELLIGENCE PLATFORM
+            </span>
+            <p className="font-body font-light text-sm text-ink-muted leading-relaxed max-w-sm">
               AI-powered symptom analysis, disease prediction, and healthcare resource discovery for everyone.
             </p>
-            <div className="flex gap-4 mt-4">
-              <a href="#" className="text-gray-500 hover:text-primary-400 transition-colors"><FaGithub className="text-lg" /></a>
-              <a href="#" className="text-gray-500 hover:text-primary-400 transition-colors"><FaTwitter className="text-lg" /></a>
-              <a href="#" className="text-gray-500 hover:text-primary-400 transition-colors"><FaLinkedin className="text-lg" /></a>
-            </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Product Links */}
           <div>
-            <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Product</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link to="/" className="hover:text-primary-400 transition-colors">Home</Link></li>
-              <li><Link to="/predict" className="hover:text-primary-400 transition-colors">Symptom Checker</Link></li>
-              <li><Link to="/ngos" className="hover:text-primary-400 transition-colors">Find NGOs</Link></li>
-              <li><Link to="/about" className="hover:text-primary-400 transition-colors">About Us</Link></li>
+            <span className="font-body font-medium tracking-ultra uppercase text-2xs text-ink-faint mb-6 block">
+              PLATFORM
+            </span>
+            <ul className="flex flex-col gap-3">
+              <li><Link to="/" className="text-sm text-ink-muted hover:text-ink transition-colors">Home</Link></li>
+              <li><Link to="/predict" className="text-sm text-ink-muted hover:text-ink transition-colors">Symptom Checker</Link></li>
+              <li><Link to="/ngos" className="text-sm text-ink-muted hover:text-ink transition-colors">Directory</Link></li>
+              <li><Link to="/about" className="text-sm text-ink-muted hover:text-ink transition-colors">About Us</Link></li>
             </ul>
           </div>
 
-          {/* Account */}
+          {/* Account Links */}
           <div>
-            <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Account</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link to="/login" className="hover:text-primary-400 transition-colors">Login</Link></li>
-              <li><Link to="/register" className="hover:text-primary-400 transition-colors">Register</Link></li>
-              <li><Link to="/dashboard" className="hover:text-primary-400 transition-colors">Dashboard</Link></li>
+            <span className="font-body font-medium tracking-ultra uppercase text-2xs text-ink-faint mb-6 block">
+              ACCOUNT
+            </span>
+            <ul className="flex flex-col gap-3">
+              <li><Link to="/login" className="text-sm text-ink-muted hover:text-ink transition-colors">Sign In</Link></li>
+              <li><Link to="/register" className="text-sm text-ink-muted hover:text-ink transition-colors">Create Account</Link></li>
+              <li><Link to="/dashboard" className="text-sm text-ink-muted hover:text-ink transition-colors">Dashboard</Link></li>
             </ul>
           </div>
         </div>
 
-        <hr className="border-gray-800 mt-10 mb-6" />
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 text-sm">
-          <p>© {currentYear} ComCare. All rights reserved.</p>
-          <p className="text-xs">⚠️ ComCare is not a substitute for professional medical advice.</p>
+        {/* Bottom Bar */}
+        <div className="border-t border-[#1A1A1A] pt-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <p className="font-mono text-xs text-ink-faint">
+            © {currentYear} COMCARE
+          </p>
+          <p className="font-mono text-xs text-ink-faint">
+            NOT A SUBSTITUTE FOR PROFESSIONAL MEDICAL ADVICE.
+          </p>
         </div>
       </div>
     </footer>

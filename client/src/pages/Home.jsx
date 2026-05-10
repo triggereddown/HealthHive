@@ -1,184 +1,230 @@
 import { Link } from 'react-router-dom';
-import { FaBrain, FaHospital, FaShieldAlt, FaChartLine, FaArrowRight, FaHeartbeat } from 'react-icons/fa';
-import { MdHealthAndSafety } from 'react-icons/md';
+import { FaBrain, FaHospital, FaShieldAlt, FaChartLine } from 'react-icons/fa';
 import useAuthStore from '../store/authStore';
+import { useInView } from '../utils/useInView';
+import { useEffect, useState } from 'react';
 
 const features = [
   {
     icon: FaBrain,
     title: 'AI-Powered Predictions',
     description: 'Enter your symptoms and receive instant disease predictions powered by our intelligent analysis engine.',
-    color: 'bg-violet-100 text-violet-600',
   },
   {
     icon: FaHospital,
     title: 'NGO Directory',
     description: 'Discover verified NGOs and healthcare services near you, with contact details and services offered.',
-    color: 'bg-emerald-100 text-emerald-600',
   },
   {
     icon: FaShieldAlt,
     title: 'Secure & Private',
     description: 'Your health data is encrypted and protected with enterprise-grade security. Your privacy is our priority.',
-    color: 'bg-blue-100 text-blue-600',
   },
   {
     icon: FaChartLine,
     title: 'Health History',
     description: 'Track your prediction history over time to monitor your health journey and share with your doctor.',
-    color: 'bg-orange-100 text-orange-600',
   },
 ];
 
 const stats = [
-  { label: 'Diseases Covered', value: '18+' },
-  { label: 'NGOs Listed', value: '50+' },
-  { label: 'Users Helped', value: '10K+' },
-  { label: 'Accuracy Rate', value: '85%' },
+  { label: 'Diseases Covered', value: 18, suffix: '+' },
+  { label: 'NGOs Listed', value: 50, suffix: '+' },
+  { label: 'Users Helped', value: 10, suffix: 'K+' },
+  { label: 'Accuracy Rate', value: 85, suffix: '%' },
 ];
+
+function AnimatedNumber({ value, suffix }) {
+  const [ref, inView] = useInView(0.5);
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (inView) {
+      let start = 0;
+      const duration = 1200;
+      const stepTime = Math.abs(Math.floor(duration / value));
+      const timer = setInterval(() => {
+        start += 1;
+        setCount(start);
+        if (start === value) clearInterval(timer);
+      }, stepTime);
+      return () => clearInterval(timer);
+    }
+  }, [inView, value]);
+
+  return (
+    <span ref={ref} className="font-display text-[clamp(4rem,8vw,7rem)] text-ink leading-none tracking-tightest">
+      {count}{suffix}
+    </span>
+  );
+}
 
 function Home() {
   const { user } = useAuthStore();
 
   return (
-    <div>
-      {/* ─── Hero Section ────────────────────────────────── */}
-      <section className="bg-hero-gradient min-h-[90vh] flex items-center relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 -left-24 w-80 h-80 bg-primary-400/10 rounded-full blur-3xl" />
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="text-white animate-fade-in">
-              <div className="inline-flex items-center gap-2 bg-white/15 border border-white/20 rounded-full px-4 py-2 mb-6 text-sm font-medium backdrop-blur-sm">
-                <MdHealthAndSafety className="text-primary-300" />
-                <span>Smart Healthcare Platform</span>
-              </div>
-
-              <h1 className="font-playfair text-5xl md:text-6xl font-bold leading-tight mb-6">
-                Your Health,{' '}
-                <span className="text-primary-300">Intelligently</span>{' '}
-                Understood
-              </h1>
-
-              <p className="text-lg text-white/80 leading-relaxed mb-8 max-w-lg">
-                Enter your symptoms, get instant disease insights, discover healthcare NGOs, and take control of your health journey — all in one platform.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                {user ? (
-                  <Link to="/predict" className="btn-primary bg-white text-primary-800 hover:bg-gray-100 flex items-center justify-center gap-2">
-                    Check Symptoms <FaArrowRight />
+    <div className="bg-void">
+      {/* SECTION 1 — HERO */}
+      <section className="curtain-section z-10 bg-void bg-dot-grid">
+        <div className="grid lg:grid-cols-2 min-h-screen px-6 sm:px-12 lg:px-24 pt-32 pb-24 gap-16 lg:gap-8">
+          
+          {/* LEFT COLUMN */}
+          <div className="flex flex-col justify-center">
+            <span className="section-label">/ AI HEALTH INTELLIGENCE</span>
+            
+            <h1 className="font-display text-display-xl uppercase text-ink leading-none tracking-tightest mb-8">
+              <span className="block">YOUR HEALTH,</span>
+              <span className="block text-accent">INTELLIGENTLY</span>
+              <span className="block">UNDERSTOOD</span>
+            </h1>
+            
+            <p className="font-body font-light text-base text-ink-muted leading-relaxed max-w-md">
+              Enter your symptoms, get instant disease insights, discover healthcare NGOs,
+              and take control of your health journey — all in one platform.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 mt-10">
+              {user ? (
+                <Link to="/predict" className="btn-primary">
+                  CHECK SYMPTOMS →
+                </Link>
+              ) : (
+                <>
+                  <Link to="/register" className="btn-primary">
+                    GET STARTED →
                   </Link>
-                ) : (
-                  <>
-                    <Link to="/register" className="btn-primary bg-white text-primary-800 hover:bg-gray-100 flex items-center justify-center gap-2 text-base">
-                      Get Started Free <FaArrowRight />
-                    </Link>
-                    <Link to="/ngos" className="btn-secondary border-white/40 text-white hover:bg-white/10 flex items-center justify-center gap-2 text-base">
-                      Find NGOs
-                    </Link>
-                  </>
-                )}
-              </div>
+                  <Link to="/ngos" className="btn-secondary">
+                    FIND NGOS
+                  </Link>
+                </>
+              )}
             </div>
 
-            {/* Hero Card */}
-            <div className="hidden lg:flex justify-center animate-fade-in">
-              <div className="relative w-80">
-                <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-6 space-y-4">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-primary-400/30 rounded-xl flex items-center justify-center">
-                      <FaHeartbeat className="text-white text-lg animate-pulse-slow" />
-                    </div>
-                    <div>
-                      <p className="text-white text-sm font-medium">Latest Prediction</p>
-                      <p className="text-white/60 text-xs">Just now</p>
-                    </div>
-                  </div>
-                  <div className="bg-white/10 rounded-2xl p-4">
-                    <p className="text-white/70 text-xs mb-1">Symptoms entered</p>
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {['Fever', 'Fatigue', 'Cough', 'Headache'].map(s => (
-                        <span key={s} className="badge bg-primary-300/30 text-white text-xs">{s}</span>
-                      ))}
-                    </div>
-                    <div className="border-t border-white/10 pt-3">
-                      <p className="text-white/70 text-xs mb-1">Result</p>
-                      <p className="text-white font-semibold">Influenza (Flu)</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <div className="flex-1 bg-white/10 rounded-full h-1.5">
-                          <div className="bg-primary-300 h-1.5 rounded-full" style={{ width: '78%' }} />
-                        </div>
-                        <span className="text-white text-xs font-medium">78%</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-emerald-300 text-sm">
-                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                    Recommendations ready
-                  </div>
-                </div>
+            <div className="mt-16 flex flex-wrap gap-12">
+              <div>
+                <span className="font-display text-5xl text-ink">18+</span>
+                <span className="section-label mt-2">Diseases Covered</span>
+              </div>
+              <div>
+                <span className="font-display text-5xl text-ink">85%</span>
+                <span className="section-label mt-2">Accuracy Rate</span>
               </div>
             </div>
           </div>
+
+          {/* RIGHT COLUMN */}
+          <div className="hidden lg:flex items-center justify-end">
+            <div className="w-full max-w-md bg-surface border border-[#2A2A2A] rounded-lg p-6 border-t-2 border-t-accent animate-float">
+              <div className="flex justify-between items-center mb-6">
+                <span className="section-label mb-0">LATEST PREDICTION</span>
+                <div className="animate-pulse bg-green-500 w-2 h-2 rounded-full" />
+              </div>
+
+              <div>
+                <span className="font-mono text-2xs text-ink-faint">SYMPTOMS ENTERED</span>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <span className="badge-default">Fever</span>
+                  <span className="badge-default">Fatigue</span>
+                  <span className="badge-default">Cough</span>
+                  <span className="badge-default">Headache</span>
+                </div>
+              </div>
+
+              <div className="border-t border-[#1A1A1A] my-4" />
+
+              <div>
+                <span className="section-label mb-2">RESULT</span>
+                <span className="font-display text-3xl text-ink uppercase">Influenza (Flu)</span>
+                <div className="flex items-center mt-3">
+                  <div className="bg-surface2 h-1 w-full rounded-none">
+                    <div className="bg-accent h-1 rounded-none w-[78%]" />
+                  </div>
+                  <span className="font-mono text-xs text-accent ml-2">78%</span>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <span className="badge-success">RECOMMENDATIONS READY</span>
+              </div>
+            </div>
+          </div>
+          
         </div>
       </section>
 
-      {/* ─── Stats ───────────────────────────────────────── */}
-      <section className="bg-primary-700 text-white py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            {stats.map(({ label, value }) => (
-              <div key={label}>
-                <p className="font-playfair text-4xl font-bold text-primary-200">{value}</p>
-                <p className="text-sm text-white/70 mt-1">{label}</p>
+      {/* SECTION 2 — FEATURES */}
+      <section className="curtain-section z-20 bg-surface">
+        <div className="py-section px-6 sm:px-12 lg:px-24 min-h-screen flex flex-col justify-center">
+          <div className="grid lg:grid-cols-2 gap-8 mb-16 items-end">
+            <div>
+              <span className="section-label">/ CAPABILITIES</span>
+              <h2 className="font-display text-display-md uppercase text-ink leading-none">
+                EVERYTHING YOU NEED FOR BETTER HEALTH
+              </h2>
+            </div>
+            <div className="lg:pb-2">
+              <p className="font-body font-light text-sm text-ink-muted max-w-sm">
+                Powerful tools to understand, track, and improve your health outcomes.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-[#222222] border border-[#222222]">
+            {features.map(({ icon: Icon, title, description }, idx) => (
+              <div key={title} className="bg-surface p-8 md:p-10 group transition-colors hover:bg-surface2">
+                <div className="flex justify-between items-start mb-6">
+                  <Icon className="text-ink-faint text-2xl group-hover:text-ink transition-colors" />
+                  <span className="font-mono text-2xs text-ink-faint">0{idx + 1}</span>
+                </div>
+                <h3 className="font-display text-2xl uppercase text-ink mt-6 mb-3">{title}</h3>
+                <p className="font-body font-light text-sm text-ink-muted leading-relaxed">{description}</p>
+                <div className="w-8 h-px bg-accent mt-8 transition-all duration-300 group-hover:w-16" />
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ─── Features ────────────────────────────────────── */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="section-title">Everything You Need for Better Health</h2>
-            <p className="section-subtitle">Powerful tools to understand, track, and improve your health outcomes.</p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map(({ icon: Icon, title, description, color }) => (
-              <div key={title} className="card p-6 text-center group cursor-default">
-                <div className={`w-14 h-14 ${color} rounded-2xl flex items-center justify-center mx-auto mb-4 transition-transform group-hover:scale-110 duration-200`}>
-                  <Icon className="text-2xl" />
-                </div>
-                <h3 className="font-playfair text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{description}</p>
+      {/* SECTION 3 — STATS */}
+      <section className="curtain-section z-30 bg-void">
+        <div className="py-section px-6 sm:px-12 lg:px-24 min-h-screen flex flex-col justify-center">
+          <div className="grid grid-cols-1 md:grid-cols-4 border-y border-[#222222]">
+            {stats.map(({ label, value, suffix }, idx) => (
+              <div key={label} className={`flex flex-col py-12 ${idx !== 0 ? 'md:border-l border-[#222222] md:pl-8' : 'pr-8'}`}>
+                <AnimatedNumber value={value} suffix={suffix} />
+                <span className="section-label mt-3 mb-0">{label}</span>
+                <p className="font-body font-light text-xs text-ink-faint mt-2 max-w-[150px]">
+                  Comprehensive clinical database across conditions
+                </p>
               </div>
             ))}
           </div>
+          
+          <div className="h-px w-full bg-[#1A1A1A] mt-16" />
+          <p className="font-mono text-xs text-ink-faint mt-4">
+            * All data as of 2025. Predictions are informational only.
+          </p>
         </div>
       </section>
 
-      {/* ─── CTA ─────────────────────────────────────────── */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <div className="bg-hero-gradient rounded-3xl p-12 text-white shadow-2xl">
-            <h2 className="font-playfair text-4xl font-bold mb-4">Ready to Take Charge of Your Health?</h2>
-            <p className="text-white/80 text-lg mb-8 max-w-xl mx-auto">
+      {/* SECTION 4 — CTA */}
+      <section className="curtain-section z-40 bg-void bg-dot-grid-accent">
+        <div className="py-section px-6 min-h-screen flex flex-col items-center justify-center text-center">
+          <div className="max-w-2xl mx-auto">
+            <span className="section-label">/ GET STARTED TODAY</span>
+            <h2 className="font-display text-display-lg uppercase text-ink leading-none">
+              READY TO TAKE{' '}
+              <span style={{ textDecoration: 'underline', textDecorationColor: 'var(--accent)', textDecorationThickness: '4px', textUnderlineOffset: '8px' }}>
+                CHARGE
+              </span>
+              {' '}OF YOUR HEALTH?
+            </h2>
+            <p className="mt-6 text-ink-muted font-body font-light text-base">
               Join thousands of users who trust ComCare for symptom analysis and healthcare discovery.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/register" className="bg-white text-primary-800 font-semibold py-3 px-8 rounded-xl hover:bg-gray-50 transition-colors shadow-lg">
-                Create Free Account
-              </Link>
-              <Link to="/ngos" className="border-2 border-white/40 text-white font-semibold py-3 px-8 rounded-xl hover:bg-white/10 transition-colors">
-                Browse NGOs
-              </Link>
+            <div className="mt-10 flex flex-col sm:flex-row justify-center gap-6">
+              <Link to="/register" className="btn-primary">CREATE FREE ACCOUNT</Link>
+              <Link to="/ngos" className="btn-secondary">BROWSE NGOS</Link>
             </div>
           </div>
         </div>

@@ -1,7 +1,6 @@
-import { useState, useRef } from 'react';
-import { FaHeartbeat, FaTimes, FaPlus, FaExclamationTriangle, FaRedo } from 'react-icons/fa';
+import { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import usePredictionStore from '../store/predictionStore';
-import Spinner from '../components/Spinner';
 
 // Some common symptoms for autocomplete
 const COMMON_SYMPTOMS = [
@@ -17,6 +16,15 @@ function Predict() {
   
   const { predict, currentResult, isLoading, clearResult } = usePredictionStore();
   const inputRef = useRef(null);
+
+  const [confidenceWidth, setConfidenceWidth] = useState(0);
+  useEffect(() => {
+    if (currentResult) {
+      setTimeout(() => setConfidenceWidth(currentResult.confidence), 100);
+    } else {
+      setConfidenceWidth(0);
+    }
+  }, [currentResult]);
 
   const handleInputChange = (e) => {
     const value = e.target.value;
@@ -43,7 +51,7 @@ function Predict() {
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
       if (inputValue) addSymptom(inputValue);
     }
@@ -64,37 +72,44 @@ function Predict() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
-      <div className="text-center mb-10">
-        <h1 className="font-playfair text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-          Intelligent Symptom Checker
+    <div className="max-w-3xl mx-auto px-6 py-24 pb-32">
+      <div className="mb-12">
+        <span className="section-label">/ SYMPTOM ANALYSIS ENGINE</span>
+        <h1 className="font-display text-display-sm uppercase text-ink">
+          INTELLIGENT SYMPTOM CHECKER
         </h1>
-        <p className="text-gray-500 max-w-2xl mx-auto">
+        <p className="font-body font-light text-sm text-ink-muted max-w-xl mt-4">
           Enter your symptoms below to get an AI-powered disease prediction. Note: This tool is for informational purposes and is not a substitute for professional medical advice.
         </p>
+        <div className="border-t border-[#222222] mt-8 mb-12" />
       </div>
 
       {!currentResult ? (
-        <div className="card p-6 md:p-10 animate-fade-in shadow-xl">
-          <div className="mb-6">
-            <label className="block text-gray-700 font-medium mb-3 text-lg">
-              What are you feeling?
-            </label>
+        <div className="bg-surface border border-[#222222] p-8 md:p-12 rounded-none">
+          <div className="bg-surface2 border-b border-[#1A1A1A] px-6 py-3 -mx-8 -mt-8 md:-mx-12 md:-mt-12 mb-8 flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-600" />
+            <div className="w-3 h-3 rounded-full bg-yellow-500" />
+            <div className="w-3 h-3 rounded-full bg-green-600" />
+            <span className="font-mono text-xs text-ink-faint ml-4">comcare://symptom-analysis</span>
+          </div>
+
+          <div className="mb-8">
+            <label className="section-label mb-4">ENTER YOUR SYMPTOMS</label>
             <div className="relative">
-              <div className="flex border-2 border-primary-100 rounded-xl bg-gray-50/50 p-2 focus-within:border-primary-400 focus-within:bg-white transition-all flex-wrap gap-2">
+              <div className="min-h-[80px] bg-surface2 border border-[#2A2A2A] p-4 flex flex-wrap gap-2 items-start focus-within:border-accent transition-colors rounded-none">
                 {symptoms.map((s, idx) => (
-                  <span key={idx} className="bg-primary-100 text-primary-800 text-sm font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5 border border-primary-200">
+                  <span key={idx} className="bg-accent-glow border border-accent text-accent text-2xs font-mono px-3 py-1.5 rounded-full flex items-center gap-2">
                     {s}
-                    <button type="button" onClick={() => removeSymptom(s)} className="hover:text-primary-900 focus:outline-none">
-                      <FaTimes className="text-xs" />
+                    <button type="button" onClick={() => removeSymptom(s)} className="text-accent hover:text-ink focus:outline-none">
+                      ×
                     </button>
                   </span>
                 ))}
                 <input
                   ref={inputRef}
                   type="text"
-                  className="flex-1 bg-transparent min-w-[150px] outline-none text-gray-800 py-1.5 focus:ring-0 px-2"
-                  placeholder={symptoms.length === 0 ? "e.g., headache, fever, cough..." : "Add another symptom..."}
+                  className="flex-1 bg-transparent min-w-[180px] outline-none text-ink placeholder-ink-faint font-mono text-sm py-1"
+                  placeholder={symptoms.length === 0 ? "e.g., headache, fever, cough..." : ""}
                   value={inputValue}
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
@@ -104,25 +119,24 @@ function Predict() {
               
               {/* Autocomplete Dropdown */}
               {suggestions.length > 0 && (
-                <ul className="absolute z-10 w-full bg-white mt-1 rounded-xl shadow-lg border border-gray-100 py-1 max-h-60 overflow-auto">
+                <ul className="absolute z-50 w-full bg-surface2 border border-[#2A2A2A] mt-1 shadow-elevated py-1 max-h-60 overflow-auto">
                   {suggestions.map((s, idx) => (
                     <li 
                       key={idx}
-                      className="px-4 py-2 cursor-pointer hover:bg-primary-50 text-gray-700 flex items-center gap-2"
+                      className="px-4 py-3 cursor-pointer hover:bg-surface text-ink-muted hover:text-ink font-body text-sm flex items-center"
                       onClick={() => addSymptom(s)}
                     >
-                      <FaPlus className="text-xs text-primary-400" /> {s}
+                      <span className="font-mono text-accent text-xs mr-2">$</span> {s}
                     </li>
                   ))}
                 </ul>
               )}
             </div>
-            <p className="text-xs text-gray-400 mt-2">Press enter or comma to add a symptom.</p>
           </div>
 
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-8 flex gap-3 text-sm text-yellow-800">
-            <FaExclamationTriangle className="text-yellow-600 mt-0.5 shrink-0 text-lg" />
-            <p>
+          <div className="bg-surface2 border-l-2 border-warning px-5 py-4 flex gap-3 mt-6 mb-8">
+            <span className="text-warning">⚠</span>
+            <p className="font-body font-light text-xs text-ink-muted">
               Please enter at least one symptom to run the analysis. The more specific symptoms you provide, the more accurate the prediction might be.
             </p>
           </div>
@@ -130,64 +144,68 @@ function Predict() {
           <button
             onClick={handleSubmit}
             disabled={symptoms.length === 0 || isLoading}
-            className="btn-primary w-full py-3.5 text-lg flex justify-center items-center gap-2"
+            className="btn-primary w-full py-4 text-sm mt-8"
           >
             {isLoading ? (
-              <><Spinner size="sm" className="border-white/30 border-t-white" /> Analyzing Symptoms...</>
+              <span className="font-mono flex items-center justify-center gap-1">
+                ANALYZING<span className="animate-pulse">...</span>
+              </span>
             ) : (
-              <><FaHeartbeat className="text-xl" /> Run Prediction Analysis</>
+              "RUN PREDICTION ANALYSIS →"
             )}
           </button>
         </div>
       ) : (
         /* Result View */
-        <div className="card overflow-hidden animate-slide-up shadow-xl">
-          <div className="bg-hero-gradient p-8 text-white relative">
-            <h2 className="text-sm font-medium uppercase tracking-wider text-primary-200 mb-2">Analysis Result</h2>
-            <h3 className="font-playfair text-4xl font-bold mb-4">{currentResult.result}</h3>
+        <div className="bg-surface border-t-2 border-t-accent border-l border-r border-b border-[#222222] animate-slide-up relative">
+          <div className="p-8 md:p-12">
+            <span className="section-label">/ ANALYSIS RESULT</span>
+            <h3 className="font-display text-display-md uppercase text-ink mt-2 mb-8 leading-none tracking-tightest">
+              {currentResult.result}
+            </h3>
             
-            <div className="mb-2">
-              <div className="flex justify-between items-end mb-1">
-                <span className="text-sm font-medium">Confidence Score</span>
-                <span className="text-2xl font-bold">{currentResult.confidence}%</span>
-              </div>
-              <div className="w-full bg-black/20 rounded-full h-2">
-                <div 
-                  className={`h-2 rounded-full ${currentResult.confidence >= 70 ? 'bg-green-400' : currentResult.confidence >= 40 ? 'bg-yellow-400' : 'bg-red-400'}`}
-                  style={{ width: `${currentResult.confidence}%` }}
-                ></div>
-              </div>
+            <div className="flex justify-between items-end">
+              <span className="section-label mb-0">CONFIDENCE</span>
+              <span className="font-mono text-5xl text-accent">{currentResult.confidence}%</span>
+            </div>
+            <div className="h-px w-full bg-[#1A1A1A] mt-4">
+              <div 
+                className="bg-accent h-px transition-all duration-1000 ease-out"
+                style={{ width: `${confidenceWidth}%` }}
+              />
             </div>
           </div>
           
-          <div className="p-8">
-            <div className="mb-8">
-              <h4 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">Clinical Description</h4>
-              <p className="text-gray-600 leading-relaxed">{currentResult.description}</p>
+          <div className="border-t border-[#1A1A1A]" />
+          
+          <div className="p-8 md:p-12">
+            <span className="section-label">/ CLINICAL DESCRIPTION</span>
+            <p className="font-body font-light text-sm text-ink-muted leading-relaxed">
+              {currentResult.description}
+            </p>
+          </div>
+          
+          <div className="border-t border-[#1A1A1A]" />
+          
+          <div className="p-8 md:p-12">
+            <span className="section-label">/ RECOMMENDED ACTIONS</span>
+            <div className="flex flex-col">
+              {currentResult.recommendations.map((rec, idx) => (
+                <div key={idx} className="flex gap-4 py-4 border-b border-[#1A1A1A] last:border-0">
+                  <span className="font-mono text-2xs text-ink-faint w-6 shrink-0 pt-0.5">0{idx + 1}</span>
+                  <p className="font-body font-light text-sm text-ink-muted">{rec}</p>
+                </div>
+              ))}
             </div>
-            
-            <div className="mb-8">
-              <h4 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">Recommended Actions</h4>
-              <ul className="space-y-3">
-                {currentResult.recommendations.map((rec, idx) => (
-                  <li key={idx} className="flex gap-3">
-                    <span className="shrink-0 w-6 h-6 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-bold text-sm">
-                      {idx + 1}
-                    </span>
-                    <span className="text-gray-700">{rec}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 border-t pt-6">
-              <button onClick={resetForm} className="btn-secondary flex-1 flex items-center justify-center gap-2">
-                <FaRedo /> New Analysis
-              </button>
-              <Link to="/ngos" className="btn-primary flex-1 flex items-center justify-center gap-2 text-center">
-                Find Nearby Healthcare <FaHeartbeat />
-              </Link>
-            </div>
+          <div className="p-8 border-t border-[#1A1A1A] flex flex-col sm:flex-row gap-4">
+            <button onClick={resetForm} className="btn-secondary flex-1">
+              ← NEW ANALYSIS
+            </button>
+            <Link to="/ngos" className="btn-primary flex-1">
+              FIND NEARBY HEALTHCARE →
+            </Link>
           </div>
         </div>
       )}

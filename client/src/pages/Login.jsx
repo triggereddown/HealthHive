@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
-import Spinner from '../components/Spinner';
 
 function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -23,7 +22,7 @@ function Login() {
     }
     try {
       await login(form);
-      toast.success('Welcome back! 👋');
+      toast.success('ACCESS GRANTED');
       navigate('/dashboard');
     } catch (err) {
       toast.error(err.message);
@@ -32,14 +31,14 @@ function Login() {
 
   return (
     <div>
-      <div className="text-center mb-8">
-        <h1 className="font-playfair text-3xl font-bold text-gray-900">Welcome back</h1>
-        <p className="text-gray-500 mt-2 text-sm">Sign in to your ComCare account</p>
+      <div className="mb-10">
+        <span className="section-label">/ AUTHENTICATION</span>
+        <h1 className="font-display text-4xl uppercase text-ink">SYSTEM LOGIN</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="label" htmlFor="email">Email Address</label>
+          <label className="section-label mb-2 block" htmlFor="email">EMAIL ADDRESS</label>
           <input
             id="email"
             name="email"
@@ -47,14 +46,14 @@ function Login() {
             autoComplete="email"
             value={form.email}
             onChange={handleChange}
-            placeholder="you@example.com"
+            placeholder="ID FORMAT: user@domain.com"
             className="input-field"
             disabled={isLoading}
           />
         </div>
 
         <div>
-          <label className="label" htmlFor="password">Password</label>
+          <label className="section-label mb-2 block" htmlFor="password">ACCESS KEY</label>
           <div className="relative">
             <input
               id="password"
@@ -63,13 +62,13 @@ function Login() {
               autoComplete="current-password"
               value={form.password}
               onChange={handleChange}
-              placeholder="Enter your password"
+              placeholder="ENTER CREDENTIALS"
               className="input-field pr-12"
               disabled={isLoading}
             />
             <button
               type="button"
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-faint hover:text-accent transition-colors"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />}
@@ -81,25 +80,26 @@ function Login() {
           id="login-submit"
           type="submit"
           disabled={isLoading}
-          className="btn-primary w-full flex items-center justify-center gap-2 text-base"
+          className="btn-primary w-full mt-4 py-4"
         >
           {isLoading ? (
-            <>
-              <Spinner size="sm" className="border-white/30 border-t-white" />
-              Signing In...
-            </>
+            <span className="font-mono flex items-center justify-center gap-1 text-sm">
+              AUTHENTICATING<span className="animate-pulse">...</span>
+            </span>
           ) : (
-            'Sign In'
+            'AUTHENTICATE →'
           )}
         </button>
       </form>
 
-      <p className="text-center text-sm text-gray-500 mt-6">
-        Don&apos;t have an account?{' '}
-        <Link to="/register" className="text-primary-600 font-medium hover:text-primary-700 transition-colors">
-          Create one free
-        </Link>
-      </p>
+      <div className="mt-8 pt-8 border-t border-[#222222]">
+        <p className="font-body text-sm text-ink-muted">
+          NO ACCESS CREDENTIALS?{' '}
+          <Link to="/register" className="font-mono text-accent hover:text-white transition-colors border-b border-accent ml-2 pb-0.5">
+            REQUEST ACCESS
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

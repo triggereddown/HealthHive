@@ -1,42 +1,53 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { FaHeartbeat, FaBars, FaTimes, FaUserCircle } from 'react-icons/fa';
 import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
 
 const navLinks = [
-  { to: '/', label: 'Home' },
-  { to: '/predict', label: 'Predict', protected: true },
-  { to: '/ngos', label: 'NGOs' },
-  { to: '/about', label: 'About' },
+  { to: '/', label: 'HOME' },
+  { to: '/predict', label: 'PREDICT', protected: true },
+  { to: '/ngos', label: 'NGOS' },
+  { to: '/about', label: 'ABOUT' },
 ];
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   const handleLogout = () => {
     logout();
-    toast.success('Logged out successfully.');
+    toast.success('LOGGED OUT.');
     navigate('/');
     setIsOpen(false);
   };
 
   return (
-    <nav className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <>
+      <nav className={`
+        fixed top-0 left-0 right-0 z-[100] h-[60px]
+        transition-all duration-300 flex items-center
+        ${scrolled 
+          ? 'bg-void/95 backdrop-blur-md border-b border-[#1A1A1A]' 
+          : 'bg-transparent border-b border-transparent'
+        }
+      `}>
+        <div className="w-full max-w-7xl mx-auto px-6 sm:px-8 lg:px-16 xl:px-24 flex justify-between items-center">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center group-hover:bg-primary-700 transition-colors">
-              <FaHeartbeat className="text-white text-sm" />
-            </div>
-            <span className="font-playfair text-xl font-bold text-primary-800">ComCare</span>
+          <Link to="/" className="flex items-center">
+            <span className="w-1 h-4 bg-accent inline-block mr-2 align-middle" />
+            <span className="font-display text-2xl tracking-tightest text-ink">COMCARE</span>
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-10">
             {navLinks.map(({ to, label, protected: isProtected }) => {
               if (isProtected && !user) return null;
               return (
@@ -44,10 +55,8 @@ function Navbar() {
                   key={to}
                   to={to}
                   className={({ isActive }) =>
-                    `px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-primary-50 text-primary-700'
-                        : 'text-gray-600 hover:text-primary-700 hover:bg-gray-50'
+                    `font-body font-medium tracking-widest uppercase text-xs transition-colors duration-200 ${
+                      isActive ? 'text-accent' : 'text-ink-muted hover:text-ink'
                     }`
                   }
                 >
@@ -58,89 +67,101 @@ function Navbar() {
           </div>
 
           {/* Desktop Auth */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center">
             {user ? (
-              <div className="flex items-center gap-3">
-                <Link
-                  to="/dashboard"
-                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-700 transition-colors"
-                >
-                  <FaUserCircle className="text-xl text-primary-500" />
-                  <span className="font-medium">{user.name.split(' ')[0]}</span>
+              <div className="flex items-center gap-6">
+                <Link to="/dashboard" className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                  <span className="font-mono text-xs text-ink-muted">{user.name.split(' ')[0]}</span>
                 </Link>
-                <button onClick={handleLogout} className="btn-secondary text-sm py-2 px-4">
-                  Logout
+                <button onClick={handleLogout} className="btn-ghost">
+                  LOGOUT
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
-                <Link to="/login" className="btn-ghost text-sm">Log In</Link>
-                <Link to="/register" className="btn-primary text-sm py-2 px-5">Get Started</Link>
+              <div className="flex items-center gap-4">
+                <Link to="/login" className="btn-ghost">LOG IN</Link>
+                <Link to="/register" className="btn-primary">GET STARTED</Link>
               </div>
             )}
           </div>
 
           {/* Mobile toggle */}
           <button
-            className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+            className="md:hidden text-ink-muted hover:text-ink p-2"
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Toggle menu"
           >
-            {isOpen ? <FaTimes className="text-xl" /> : <FaBars className="text-xl" />}
+            <svg width="20" height="14" className="transition-transform duration-300">
+              <line x1="0" y1="2" x2="20" y2="2" stroke="currentColor" strokeWidth="1.5" className={`transition-all duration-300 origin-center ${isOpen ? 'rotate-45 translate-y-[5px]' : ''}`} />
+              <line x1="0" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="1.5" className={`transition-all duration-300 origin-center ${isOpen ? '-rotate-45 -translate-y-[5px]' : ''}`} />
+            </svg>
           </button>
         </div>
-      </div>
+      </nav>
 
-      {/* Mobile Menu */}
-      {isOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 px-4 pb-4 animate-slide-up">
-          <div className="flex flex-col gap-1 mt-3">
-            {navLinks.map(({ to, label, protected: isProtected }) => {
-              if (isProtected && !user) return null;
-              return (
-                <NavLink
-                  key={to}
-                  to={to}
-                  onClick={() => setIsOpen(false)}
-                  className={({ isActive }) =>
-                    `px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                      isActive ? 'bg-primary-50 text-primary-700' : 'text-gray-700 hover:bg-gray-50'
-                    }`
-                  }
-                >
-                  {label}
-                </NavLink>
-              );
-            })}
+      {/* Mobile Menu Overlay */}
+      <div 
+        className={`fixed inset-0 bg-void z-[99] flex flex-col pt-32 px-6 pb-12 transition-transform duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${isOpen ? 'translate-y-0' : '-translate-y-full'}`}
+      >
+        {/* Close Button inside menu (optional, already handled by toggle but good to have) */}
+        <button 
+          onClick={() => setIsOpen(false)}
+          className="absolute top-4 right-6 text-ink-muted p-2"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
 
-            <hr className="my-2 border-gray-100" />
-            {user ? (
-              <>
-                <Link
-                  to="/dashboard"
-                  onClick={() => setIsOpen(false)}
-                  className="px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg flex items-center gap-2"
-                >
-                  <FaUserCircle className="text-primary-500" /> {user.name}
-                </Link>
-                <button onClick={handleLogout} className="btn-secondary w-full text-sm mt-1">
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link to="/login" onClick={() => setIsOpen(false)} className="btn-ghost w-full text-center text-sm">
-                  Log In
-                </Link>
-                <Link to="/register" onClick={() => setIsOpen(false)} className="btn-primary w-full text-center text-sm mt-1">
-                  Get Started
-                </Link>
-              </>
-            )}
-          </div>
+        <div className="flex flex-col gap-6 flex-1">
+          {navLinks.map(({ to, label, protected: isProtected }, idx) => {
+            if (isProtected && !user) return null;
+            return (
+              <NavLink
+                key={to}
+                to={to}
+                onClick={() => setIsOpen(false)}
+                className={({ isActive }) =>
+                  `font-display text-5xl uppercase transition-colors ${
+                    isActive ? 'text-accent' : 'text-ink hover:text-accent'
+                  }`
+                }
+                style={{
+                  opacity: isOpen ? 1 : 0,
+                  transform: isOpen ? 'translateY(0)' : 'translateY(20px)',
+                  transition: `all 0.4s cubic-bezier(0.16,1,0.3,1) ${idx * 0.06 + 0.2}s`
+                }}
+              >
+                {label}
+              </NavLink>
+            );
+          })}
         </div>
-      )}
-    </nav>
+
+        <div 
+          className="border-t border-[#1A1A1A] pt-8 flex gap-4"
+          style={{
+            opacity: isOpen ? 1 : 0,
+            transform: isOpen ? 'translateY(0)' : 'translateY(20px)',
+            transition: 'all 0.4s cubic-bezier(0.16,1,0.3,1) 0.5s'
+          }}
+        >
+          {user ? (
+            <>
+              <Link to="/dashboard" onClick={() => setIsOpen(false)} className="btn-secondary flex-1">DASHBOARD</Link>
+              <button onClick={handleLogout} className="btn-primary flex-1">LOGOUT</button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" onClick={() => setIsOpen(false)} className="btn-secondary flex-1">LOG IN</Link>
+              <Link to="/register" onClick={() => setIsOpen(false)} className="btn-primary flex-1">GET STARTED</Link>
+            </>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
 
