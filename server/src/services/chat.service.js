@@ -84,23 +84,13 @@ const parseDiagnosis = (text) => {
 // ──────────────────────────────────────────────────────────────────────────────
 // MAIN CHAT FUNCTION
 // Takes full conversation history + new user message, returns AI reply.
+// Tries models in order: gemini-2.0-flash → gemini-1.5-flash-latest → fallback
 // ──────────────────────────────────────────────────────────────────────────────
-const sendChatMessage = async (history, userMessage) => {
-  const apiKey = process.env.GEMINI_API_KEY;
+const MODEL_FALLBACK_CHAIN = ['gemini-2.0-flash', 'gemini-1.5-flash-latest'];
 
-  if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY_HERE') {
-    // Fallback: simple scripted responses when no API key
-    return {
-      type: 'question',
-      content: "I'm sorry, the AI service is not configured right now. Please ensure the GEMINI_API_KEY is set in your environment.",
-      diagnosis: null,
-    };
-  }
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-
+const tryGeminiModel = async (genAI, modelName, history, userMessage) => {
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash',
+    model: modelName,
     systemInstruction: SYSTEM_INSTRUCTION,
     generationConfig: {
       temperature: 0.6,
@@ -110,8 +100,6 @@ const sendChatMessage = async (history, userMessage) => {
     },
   });
 
-  // Convert stored history to Gemini format
-  // Gemini history does NOT include the current message being sent
   const geminiHistory = history.map((msg) => ({
     role: msg.role,
     parts: [{ text: msg.content }],
@@ -125,20 +113,81 @@ const sendChatMessage = async (history, userMessage) => {
     throw new Error('Gemini returned an empty response');
   }
 
-  // Check if the response contains a diagnosis block
-  if (/<DIAGNOSIS>/i.test(responseText)) {
+  return responseText;
+};
+
+const sendChatMessage = async (history, userMessage) => {
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY_HERE') {
+    return {
+      type: 'question',
+      content: "I'm sorry, the AI service is not configured. Please ensure GEMINI_API_KEY is set in the server .env file.",
+      diagnosis: null,
+    };
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  let lastError = null;
+
+  // Try each model in the fallback chain
+  for (const modelName of MODEL_FALLBACK_CHAIN) {
     try {
-      const diagnosis = parseDiagnosis(responseText);
-      if (diagnosis) {
-        return { type: 'diagnosis', content: diagnosis.summary, diagnosis };
+      console.log(`🤖 Trying model: ${modelName}`);
+      const responseText = await tryGeminiModel(genAI, modelName, history, userMessage);
+
+      console.log(`✅ Response from ${modelName}`);
+
+      // Check if the response contains a diagnosis block
+      if (/<DIAGNOSIS>/i.test(responseText)) {
+        try {
+          const diagnosis = parseDiagnosis(responseText);
+          if (diagnosis) {
+            return { type: 'diagnosis', content: diagnosis.summary, diagnosis };
+          }
+        } catch (parseErr) {
+          console.error('❌ Failed to parse diagnosis JSON:', parseErr.message);
+          // Fall through to return as a regular question
+        }
       }
-    } catch (parseErr) {
-      console.error('❌ Failed to parse diagnosis JSON:', parseErr.message);
-      // Fall through to return as a regular message
+
+      return { type: 'question', content: responseText.trim(), diagnosis: null };
+
+    } catch (err) {
+      const msg = err.message || '';
+      const isQuota = msg.includes('429') || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('Too Many Requests');
+      const isNotFound = msg.includes('404') || msg.includes('not found');
+
+      if (isQuota) {
+        console.warn(`⚠️  ${modelName}: Quota exceeded. Trying next model...`);
+        lastError = 'quota';
+      } else if (isNotFound) {
+        console.warn(`⚠️  ${modelName}: Model not found. Trying next model...`);
+        lastError = 'not_found';
+      } else {
+        console.error(`❌ ${modelName} error: ${msg}`);
+        lastError = 'error';
+      }
     }
   }
 
-  return { type: 'question', content: responseText.trim(), diagnosis: null };
+  // All models failed — return a friendly fallback response
+  console.warn('↩️  All Gemini models unavailable. Using scripted fallback.');
+
+  if (lastError === 'quota') {
+    return {
+      type: 'question',
+      content: "I'm experiencing high demand right now and my AI quota has been reached for today. Please try the standard Predict tool (tag-based) instead, or try the chat again tomorrow when the quota resets.",
+      diagnosis: null,
+    };
+  }
+
+  return {
+    type: 'question',
+    content: "I'm having trouble connecting to the AI service right now. Please try again in a few moments, or use the standard Predict tool instead.",
+    diagnosis: null,
+  };
 };
 
 module.exports = { sendChatMessage };
+
