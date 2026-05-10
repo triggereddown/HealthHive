@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Predict from './pages/Predict';
+import Chat from './pages/Chat';
 import NGOs from './pages/NGOs';
 import About from './pages/About';
 
@@ -26,6 +27,7 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/predict" element={<Predict />} />
+            <Route path="/chat" element={<Chat />} />
           </Route>
         </Route>
 

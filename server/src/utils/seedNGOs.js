@@ -65,7 +65,6 @@ const NGO_SEED_DATA = [
 
 const seedNGOs = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
     const count = await NGO.countDocuments();
     if (count === 0) {
       await NGO.insertMany(NGO_SEED_DATA);
@@ -75,14 +74,22 @@ const seedNGOs = async () => {
     }
   } catch (err) {
     console.error('❌ Seeding failed:', err.message);
-  } finally {
-    await mongoose.disconnect();
   }
 };
 
 // Run if called directly
 if (require.main === module) {
-  seedNGOs();
+  const seedAndExit = async () => {
+    try {
+      await mongoose.connect(process.env.MONGO_URI);
+      await seedNGOs();
+      process.exit(0);
+    } catch (err) {
+      console.error('❌ Direct seed failed:', err.message);
+      process.exit(1);
+    }
+  };
+  seedAndExit();
 }
 
 module.exports = seedNGOs;

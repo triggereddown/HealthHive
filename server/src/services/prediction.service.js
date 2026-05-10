@@ -1,12 +1,11 @@
-/**
- * ComCare Disease Prediction Engine
- * Rule-based symptom → disease mapping with weighted confidence scoring.
- *
- * Each disease entry has:
- *  - symptoms: core symptoms (each match increases confidence)
- *  - description: brief clinical description
- *  - recommendations: action items for the user
- */
+'use strict';
+
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+// ─────────────────────────────────────────────────────────────
+// FALLBACK — Rule-based engine (used when Gemini is unavailable
+// or quota is exceeded, so the app never goes fully offline)
+// ─────────────────────────────────────────────────────────────
 
 const DISEASE_DATABASE = [
   {
@@ -44,7 +43,7 @@ const DISEASE_DATABASE = [
   },
   {
     name: 'Malaria',
-    symptoms: ['high fever', 'chills', 'sweating', 'headache', 'nausea', 'vomiting', 'muscle pain', 'fatigue', 'anemia'],
+    symptoms: ['high fever', 'chills', 'sweating', 'headache', 'nausea', 'vomiting', 'muscle pain', 'fatigue'],
     description: 'A mosquito-borne infectious disease caused by Plasmodium parasites, common in tropical regions.',
     recommendations: [
       'Seek immediate medical diagnosis via blood test',
@@ -66,7 +65,7 @@ const DISEASE_DATABASE = [
   },
   {
     name: 'Dengue Fever',
-    symptoms: ['sudden high fever', 'severe headache', 'pain behind eyes', 'joint pain', 'muscle pain', 'rash', 'mild bleeding', 'fatigue', 'nausea'],
+    symptoms: ['sudden high fever', 'severe headache', 'pain behind eyes', 'joint pain', 'muscle pain', 'rash', 'fatigue', 'nausea'],
     description: 'A mosquito-borne viral infection transmitted by Aedes mosquitoes, common in tropical areas.',
     recommendations: [
       'Visit a doctor immediately for platelet count test',
@@ -77,7 +76,7 @@ const DISEASE_DATABASE = [
   },
   {
     name: 'Diabetes (Type 2)',
-    symptoms: ['frequent urination', 'excessive thirst', 'blurred vision', 'fatigue', 'slow healing wounds', 'numbness in hands', 'numbness in feet', 'weight loss', 'infections'],
+    symptoms: ['frequent urination', 'excessive thirst', 'blurred vision', 'fatigue', 'slow healing wounds', 'numbness in hands', 'numbness in feet', 'weight loss'],
     description: 'A chronic metabolic condition where the body cannot effectively use insulin, leading to high blood sugar.',
     recommendations: [
       'Consult a diabetologist for HbA1c testing',
@@ -89,7 +88,7 @@ const DISEASE_DATABASE = [
   {
     name: 'Hypertension',
     symptoms: ['headache', 'dizziness', 'blurred vision', 'chest pain', 'shortness of breath', 'nosebleed', 'fatigue', 'palpitations'],
-    description: 'A chronic condition where blood pressure in the arteries is persistently elevated, increasing cardiovascular risk.',
+    description: 'A chronic condition where blood pressure in the arteries is persistently elevated.',
     recommendations: [
       'Measure blood pressure regularly',
       'Reduce salt and processed food intake',
@@ -110,19 +109,19 @@ const DISEASE_DATABASE = [
   },
   {
     name: 'Gastroenteritis',
-    symptoms: ['diarrhea', 'vomiting', 'nausea', 'stomach cramps', 'abdominal pain', 'mild fever', 'headache', 'muscle aches', 'dehydration'],
+    symptoms: ['diarrhea', 'vomiting', 'nausea', 'stomach cramps', 'abdominal pain', 'mild fever', 'headache', 'dehydration'],
     description: 'Inflammation of the stomach and intestines, usually caused by a viral or bacterial infection.',
     recommendations: [
       'Stay hydrated with ORS solutions',
-      'Follow a bland diet (BRAT: bananas, rice, applesauce, toast)',
+      'Follow a bland diet (bananas, rice, applesauce, toast)',
       'Avoid dairy and fatty foods temporarily',
-      'Seek care if symptoms persist beyond 3 days or blood is present',
+      'Seek care if symptoms persist beyond 3 days',
     ],
   },
   {
     name: 'Migraine',
-    symptoms: ['severe headache', 'nausea', 'vomiting', 'sensitivity to light', 'sensitivity to sound', 'blurred vision', 'dizziness', 'aura'],
-    description: 'A neurological condition characterized by intense, debilitating headaches often accompanied by sensory disturbances.',
+    symptoms: ['severe headache', 'nausea', 'vomiting', 'sensitivity to light', 'sensitivity to sound', 'blurred vision', 'dizziness'],
+    description: 'A neurological condition characterized by intense, debilitating headaches often with sensory disturbances.',
     recommendations: [
       'Rest in a quiet, dark room',
       'Take prescribed migraine medication at onset',
@@ -132,11 +131,11 @@ const DISEASE_DATABASE = [
   },
   {
     name: 'Urinary Tract Infection (UTI)',
-    symptoms: ['burning urination', 'frequent urination', 'pelvic pain', 'cloudy urine', 'blood in urine', 'strong smelling urine', 'lower back pain', 'fever'],
-    description: 'A bacterial infection affecting any part of the urinary system — kidneys, bladder, ureters, or urethra.',
+    symptoms: ['burning urination', 'frequent urination', 'pelvic pain', 'cloudy urine', 'blood in urine', 'lower back pain', 'fever'],
+    description: 'A bacterial infection affecting any part of the urinary system.',
     recommendations: [
       'Drink plenty of water to flush bacteria',
-      'Consult a doctor for urianalysis and antibiotics',
+      'Consult a doctor for urinalysis and antibiotics',
       'Avoid caffeine and alcohol during infection',
       'Complete the full antibiotic course',
     ],
@@ -144,7 +143,7 @@ const DISEASE_DATABASE = [
   {
     name: 'Anemia',
     symptoms: ['fatigue', 'weakness', 'pale skin', 'shortness of breath', 'dizziness', 'cold hands', 'cold feet', 'headache', 'brittle nails'],
-    description: 'A condition where you lack enough healthy red blood cells to carry adequate oxygen to your body\'s tissues.',
+    description: 'A condition where you lack enough healthy red blood cells to carry adequate oxygen to body tissues.',
     recommendations: [
       'Get a CBC blood test to confirm type and severity',
       'Eat iron-rich foods (spinach, lentils, red meat)',
@@ -154,7 +153,7 @@ const DISEASE_DATABASE = [
   },
   {
     name: 'Pneumonia',
-    symptoms: ['cough', 'chest pain', 'fever', 'chills', 'shortness of breath', 'fatigue', 'nausea', 'vomiting', 'confusion', 'sweating'],
+    symptoms: ['cough', 'chest pain', 'fever', 'chills', 'shortness of breath', 'fatigue', 'nausea', 'sweating'],
     description: 'An infection that inflames the air sacs in one or both lungs, which may fill with fluid.',
     recommendations: [
       'Seek immediate medical attention',
@@ -166,7 +165,7 @@ const DISEASE_DATABASE = [
   {
     name: 'Chickenpox',
     symptoms: ['itchy rash', 'blister-like sores', 'fever', 'tiredness', 'loss of appetite', 'headache'],
-    description: 'A highly contagious viral infection causing an itchy, blister-like rash, mainly affecting children.',
+    description: 'A highly contagious viral infection causing an itchy, blister-like rash.',
     recommendations: [
       'Isolate to prevent spreading the virus',
       'Apply calamine lotion for itch relief',
@@ -176,8 +175,8 @@ const DISEASE_DATABASE = [
   },
   {
     name: 'Allergy',
-    symptoms: ['sneezing', 'runny nose', 'itchy eyes', 'watery eyes', 'skin rash', 'hives', 'itching', 'congestion', 'coughing'],
-    description: 'An immune system response to a foreign substance (allergen) that isn\'t typically harmful to most people.',
+    symptoms: ['sneezing', 'runny nose', 'itchy eyes', 'watery eyes', 'skin rash', 'hives', 'itching', 'congestion'],
+    description: 'An immune system response to a foreign substance (allergen) that is not harmful to most people.',
     recommendations: [
       'Identify and avoid triggers',
       'Take prescribed antihistamines',
@@ -198,8 +197,8 @@ const DISEASE_DATABASE = [
   },
   {
     name: 'Obesity',
-    symptoms: ['excess body weight', 'fatigue', 'shortness of breath', 'joint pain', 'back pain', 'sleep apnea', 'snoring', 'excessive sweating'],
-    description: 'A complex disease involving an excessive amount of body fat that increases the risk of many health problems.',
+    symptoms: ['excess body weight', 'fatigue', 'shortness of breath', 'joint pain', 'back pain', 'sleep apnea', 'snoring'],
+    description: 'A complex disease involving an excessive amount of body fat that increases risk of many health problems.',
     recommendations: [
       'Consult a dietitian for a structured meal plan',
       'Aim for 150+ minutes of moderate exercise per week',
@@ -210,58 +209,36 @@ const DISEASE_DATABASE = [
 ];
 
 /**
- * Normalize symptom strings for comparison
+ * Fallback rule-based prediction (synchronous)
+ * Used when Gemini is unavailable or API key is missing
  */
-const normalize = (str) => str.toLowerCase().trim();
-
-/**
- * Run disease prediction given an array of symptom strings.
- * Returns the top matched disease with confidence score.
- */
-const runPrediction = (inputSymptoms) => {
+const runFallbackPrediction = (inputSymptoms) => {
+  const normalize = (s) => s.toLowerCase().trim();
   const normalized = inputSymptoms.map(normalize);
 
   const scored = DISEASE_DATABASE.map((disease) => {
     const diseaseSymptoms = disease.symptoms.map(normalize);
     let matchCount = 0;
-
     normalized.forEach((inputSym) => {
-      const matched = diseaseSymptoms.some(
-        (ds) => ds.includes(inputSym) || inputSym.includes(ds)
-      );
-      if (matched) matchCount++;
+      if (diseaseSymptoms.some((ds) => ds.includes(inputSym) || inputSym.includes(ds))) {
+        matchCount++;
+      }
     });
-
-    // Confidence: based on ratio of matched symptoms to total disease symptoms
     const rawConfidence = matchCount / diseaseSymptoms.length;
     const coverageBonus = matchCount / normalized.length;
     const confidence = Math.min(Math.round((rawConfidence * 0.7 + coverageBonus * 0.3) * 100), 97);
-
-    return {
-      disease: disease.name,
-      description: disease.description,
-      recommendations: disease.recommendations,
-      matchCount,
-      confidence,
-    };
+    return { disease: disease.name, description: disease.description, recommendations: disease.recommendations, matchCount, confidence };
   });
 
-  // Sort by match count, then confidence
   scored.sort((a, b) => b.matchCount - a.matchCount || b.confidence - a.confidence);
-
   const best = scored[0];
 
-  // If no matches at all, return a generic response
   if (best.matchCount === 0) {
     return {
-      result: 'Unknown / No Match Found',
+      result: 'No Match Found',
       confidence: 0,
-      description: 'No disease matched the provided symptoms. Please consult a medical professional for proper diagnosis.',
-      recommendations: [
-        'Visit a certified doctor for physical examination',
-        'Describe your symptoms in detail to your healthcare provider',
-        'Do not self-medicate',
-      ],
+      description: 'No disease closely matched the provided symptoms. Please consult a medical professional.',
+      recommendations: ['Visit a certified doctor', 'Describe symptoms in detail to your healthcare provider', 'Do not self-medicate'],
     };
   }
 
@@ -271,6 +248,138 @@ const runPrediction = (inputSymptoms) => {
     description: best.description,
     recommendations: best.recommendations,
   };
+};
+
+// ─────────────────────────────────────────────────────────────
+// GEMINI AI PREDICTION
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Build the structured prompt for Gemini.
+ * We instruct it to return ONLY a raw JSON object — no markdown, no backticks,
+ * no explanation text — because we parse the response directly with JSON.parse().
+ */
+const buildGeminiPrompt = (symptoms) => {
+  const symptomList = symptoms.join(', ');
+  return `You are a clinical informatics assistant. A patient reports these symptoms: ${symptomList}.
+
+Analyze the symptoms and respond with ONLY a raw JSON object. No markdown. No backticks. No explanation. No preamble. Just the JSON object.
+
+The JSON must have exactly these four keys:
+- "result": the most likely disease name as a string (be specific, e.g. "Influenza (Flu)" not just "flu")
+- "confidence": an integer between 10 and 95 representing your diagnostic confidence based on symptom match quality
+- "description": a single paragraph (2-4 sentences) clinical description of the disease in plain, patient-friendly language
+- "recommendations": an array of 3-5 actionable strings the patient should do next, ordered by priority
+
+Example of the exact format expected:
+{"result":"Common Cold","confidence":72,"description":"The common cold is a viral infection of the upper respiratory tract caused by rhinoviruses. It typically resolves within 7-10 days and is generally not serious.","recommendations":["Rest and drink plenty of fluids","Use saline nasal spray for congestion relief","Take over-the-counter decongestants if needed","See a doctor if fever exceeds 39°C or symptoms worsen after 10 days"]}
+
+Important rules:
+- "result" must be a well-known medical condition name
+- "confidence" must be an integer (not a float, not a string)
+- "recommendations" must be an array of strings, not a string
+- If symptoms do not clearly point to any specific disease, set "result" to "Unspecified Condition — Consult a Doctor", confidence to 15, and recommendations to general advice
+- NEVER suggest specific prescription drug names or dosages
+- This is for informational purposes only — do not present this as a diagnosis
+- Return ONLY the JSON object. Absolutely nothing else.`;
+};
+
+/**
+ * Parse Gemini response text into a structured prediction object.
+ * Handles cases where Gemini wraps its JSON in markdown code fences.
+ */
+const parseGeminiResponse = (text) => {
+  // Strip markdown code fences if present (```json ... ``` or ``` ... ```)
+  let cleaned = text.trim();
+  cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+
+  const parsed = JSON.parse(cleaned); // throws if not valid JSON
+
+  // Validate required fields
+  if (typeof parsed.result !== 'string' || !parsed.result) {
+    throw new Error('Gemini response missing "result" field');
+  }
+  if (typeof parsed.confidence !== 'number' || isNaN(parsed.confidence)) {
+    throw new Error('Gemini response "confidence" is not a number');
+  }
+  if (typeof parsed.description !== 'string' || !parsed.description) {
+    throw new Error('Gemini response missing "description" field');
+  }
+  if (!Array.isArray(parsed.recommendations) || parsed.recommendations.length === 0) {
+    throw new Error('Gemini response "recommendations" is not a valid array');
+  }
+
+  return {
+    result: parsed.result.trim(),
+    confidence: Math.min(Math.max(Math.round(Number(parsed.confidence)), 0), 97),
+    description: parsed.description.trim(),
+    recommendations: parsed.recommendations.map((r) => String(r).trim()).filter(Boolean),
+  };
+};
+
+/**
+ * Main prediction function — async.
+ * Tries Gemini first. Falls back to rule-based if Gemini fails for any reason.
+ *
+ * @param {string[]} symptoms - Array of symptom strings from the user
+ * @returns {Promise<{result: string, confidence: number, description: string, recommendations: string[]}>}
+ */
+const runPrediction = async (symptoms) => {
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  // If no API key is configured, use fallback immediately
+  if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY_HERE') {
+    console.warn('⚠️  GEMINI_API_KEY not set — using rule-based fallback prediction.');
+    return runFallbackPrediction(symptoms);
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+
+    // gemini-1.5-flash is free tier, fast, and sufficient for this use case
+    // Do NOT use gemini-pro — it has stricter quotas on the free tier
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.0-flash',
+      generationConfig: {
+        temperature: 0.2,       // Low temperature = more deterministic, less creative
+        topK: 1,                 // Only sample from top token
+        topP: 0.8,
+        maxOutputTokens: 512,    // JSON response will always be under 512 tokens
+      },
+    });
+
+    const prompt = buildGeminiPrompt(symptoms);
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+
+    if (!responseText || responseText.trim() === '') {
+      throw new Error('Gemini returned an empty response');
+    }
+
+    const prediction = parseGeminiResponse(responseText);
+    console.log(`✅ Gemini prediction: ${prediction.result} (${prediction.confidence}%)`);
+    return prediction;
+
+  } catch (error) {
+    // Log specific Gemini error category for debugging
+    const errMsg = error.message || '';
+
+    if (errMsg.includes('API_KEY_INVALID') || errMsg.includes('API key not valid')) {
+      console.error('❌ Gemini: Invalid API key. Check GEMINI_API_KEY in .env');
+    } else if (errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('quota')) {
+      console.warn('⚠️  Gemini: Quota exceeded. Falling back to rule-based engine.');
+    } else if (errMsg.includes('SAFETY')) {
+      console.warn('⚠️  Gemini: Response blocked by safety filters. Falling back.');
+    } else if (errMsg.includes('JSON') || errMsg.includes('parse')) {
+      console.error('❌ Gemini: Response could not be parsed as JSON. Raw response logged above.');
+    } else {
+      console.error('❌ Gemini error:', errMsg);
+    }
+
+    // Always fall back gracefully — the app must never return a 500 on prediction
+    console.log('↩️  Using rule-based fallback prediction engine.');
+    return runFallbackPrediction(symptoms);
+  }
 };
 
 module.exports = { runPrediction };

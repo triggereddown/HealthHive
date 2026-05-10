@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 
 const navLinks = [
   { to: '/', label: 'HOME' },
+  { to: '/chat', label: 'DR. AI', protected: true },
   { to: '/predict', label: 'PREDICT', protected: true },
   { to: '/ngos', label: 'NGOS' },
   { to: '/about', label: 'ABOUT' },

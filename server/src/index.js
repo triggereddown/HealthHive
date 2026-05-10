@@ -12,14 +12,17 @@ const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const predictionRoutes = require('./routes/prediction.routes');
 const ngoRoutes = require('./routes/ngo.routes');
+const chatRoutes = require('./routes/chat.routes');
 
 const app = express();
 
 // ─── Security & Utilities ────────────────────────────────
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
-  credentials: true,
+  origin: process.env.CLIENT_URL === '*'
+    ? '*'
+    : (process.env.CLIENT_URL || 'http://localhost:5173'),
+  credentials: process.env.CLIENT_URL !== '*',
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -51,6 +54,15 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/predict', predictionRoutes);
 app.use('/api/ngos', ngoRoutes);
+
+// Chat (conversational AI) — dedicated rate limiter to protect Gemini quota
+const chatLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 8,
+  message: { success: false, message: 'Too many messages. Please wait a moment.' },
+});
+app.use('/api/chat', chatLimiter);
+app.use('/api/chat', chatRoutes);
 
 // ─── Health Check ─────────────────────────────────────────
 app.get('/api/health', (req, res) => {

@@ -8,7 +8,7 @@ const predict = async (req, res, next) => {
   try {
     const { symptoms } = req.body;
 
-    const predictionResult = runPrediction(symptoms);
+    const predictionResult = await runPrediction(symptoms);
 
     const prediction = await Prediction.create({
       userId: req.user._id,
